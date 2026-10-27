@@ -1,14 +1,4 @@
-# Cambios sobre la versión base (`DesarrolloparaMoviles2026-testbasico`)
-
-Este documento compara el estado actual del proyecto contra la versión base
-(`testbasico`), y detalla **todo lo que se agregó, reescribió, modificó y eliminó**.
-
-**Resumen en una línea:** la base era una app que funcionaba completamente sobre
-**datos falsos (mocks)** con reseñas de solo lectura; el proyecto actual migra
-**comercios, rubros, autenticación y reseñas a la API real de la cátedra**, y construye
-la **sección de reseñas completa** (alta, edición, borrado, reportes, respuesta del
-comercio, modo sin conexión con cola de sincronización), con **38 tests** y
-documentación propia.
+# Cambios 
 
 ---
 
@@ -96,17 +86,3 @@ documentación propia.
 7. **Bug encontrado por un test y corregido**: la tarjeta mostraba "Responder" en reseñas que ya tenían respuesta (habría dado 409); hoy el test lo cubre.
 
 ---
-
-## 7. Qué NO cambió (queda igual que la base, a propósito)
-
-- **Promociones y usos de promo**: siguen sobre mocks (fechas ya vencidas mostradas como vigentes — pendiente migrar a `GET /promociones?estado=…` y a `POST /mi-comercio/usos/validar`).
-- **Favoritos**: kv-store local por usuario (pendiente sincronizar con `PUT/DELETE /yo/favoritos`).
-- **Panel del comercio**: solo escáner QR (validación local; pendiente `PATCH /mi-comercio` y ABM de promos).
-- **Notificaciones**: solo la local del escáner (pendientes: recordatorio de promo por vencer y el push del servidor, que es la consigna M10 de la API).
-- **Identidad de la app**: nombre, ícono y splash siguen siendo los del template.
-- **`eas.json`**: sin `"buildType": "apk"` en `preview` (sin eso el build entrega AAB, no el APK que pide la entrega).
-- **Repositorio**: la carpeta **no tiene Git inicializado** — es el pendiente más urgente del grupo: sin historial no hay entrega ni defensa defendible.
-
----
-
-*Documento generado comparando `testbasico` contra el estado actual; cada punto fue verificado contra el código real (no de memoria).*
