@@ -11,6 +11,7 @@ import {
 
 import { iniciarSesion } from "../src/servicios/autenticacion";
 import { guardarSesion } from "../src/servicios/sesion";
+import { validarIngreso } from "../src/utils/autenticacion";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -20,8 +21,10 @@ export default function LoginScreen() {
   const [error, setError] = useState<string | null>(null);
 
   async function manejarLogin() {
-    if (!email.trim() || !password.trim()) {
-      setError("Debe completar correo electrónico y contraseña.");
+    const errorDeValidacion = validarIngreso(email, password);
+
+    if (errorDeValidacion) {
+      setError(errorDeValidacion);
       return;
     }
 

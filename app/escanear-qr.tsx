@@ -1,6 +1,6 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router, Stack } from "expo-router";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -9,7 +9,14 @@ import {
   View,
 } from "react-native";
 
-import { obtenerUsuarioPorId } from "../src/servicios/autenticacion";
+import {
+  obtenerUsuarioActual,
+  obtenerUsuarioPorId,
+} from "../src/servicios/autenticacion";
+import {
+  autenticarConBiometria,
+  biometriaDisponible,
+} from "../src/servicios/biometria";
 import {
   confirmarAccionExitosa,
   informarError,
@@ -18,7 +25,15 @@ import { notificarPromocionRegistrada } from "../src/servicios/notificaciones";
 import { obtenerPromocionPorId } from "../src/servicios/promociones";
 import { registrarUsoPromocion } from "../src/servicios/usos-promociones";
 import { Promocion, Usuario } from "../src/tipos/modelos";
+import { decidirAccesoEscaneo } from "../src/utils/autenticacion";
 import { DatosQrPromocion, interpretarQrPromocion } from "../src/utils/qr";
+
+type AccesoPantalla =
+  | "verificando"
+  | "permitido"
+  | "sin-sesion"
+  | "no-comercio"
+  | "huella-cancelada";
 
 type EstadoQr =
   | "escaneando"
@@ -37,6 +52,98 @@ export default function EscanearQrScreen() {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [mensajeError, setMensajeError] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState(false);
+
+  const [acceso, setAcceso] = useState<AccesoPantalla>("verificando");
+  const [intentoAcceso, setIntentoAcceso] = useState(0);
+
+  const verificarAcceso = useCallback(async () => {
+    setAcceso("verificando");
+
+    // Solo una cuenta de comercio con sesión puede escanear.
+    const usuarioSesion = await obtenerUsuarioActual();
+    const decision = decidirAccesoEscaneo(usuarioSesion);
+
+    if (decision !== "permitido") {
+      setAcceso(decision);
+      return;
+    }
+
+    // El comercio confirma con huella antes de escanear. Si el teléfono no
+    // tiene biometría configurada, se entra sin ella (misma regla que el perfil).
+    if (await biometriaDisponible()) {
+      const autenticado = await autenticarConBiometria();
+
+      if (!autenticado) {
+        setAcceso("huella-cancelada");
+        return;
+      }
+    }
+
+    setAcceso("permitido");
+  }, []);
+
+  useEffect(() => {
+    verificarAcceso();
+  }, [verificarAcceso, intentoAcceso]);
+
+  if (acceso === "verificando") {
+    return (
+      <View style={styles.estadoContainer}>
+        <ActivityIndicator size="large" />
+        <Text style={styles.estadoTexto}>Verificando tu cuenta...</Text>
+      </View>
+    );
+  }
+
+  if (acceso !== "permitido") {
+    const mensajes = {
+      "sin-sesion":
+        "Iniciá sesión con tu cuenta de comercio para escanear promociones.",
+      "no-comercio": "El escáner es solo para cuentas de comercio.",
+      "huella-cancelada":
+        "Necesitamos confirmar tu identidad con la huella para escanear.",
+    } as const;
+
+    return (
+      <>
+        <Stack.Screen options={{ title: "Escanear QR" }} />
+
+        <View style={styles.estadoContainer}>
+          <Text style={styles.titulo}>Acceso restringido</Text>
+
+          <Text style={styles.estadoTexto}>{mensajes[acceso]}</Text>
+
+          {acceso === "sin-sesion" && (
+            <Pressable
+              onPress={() => router.push("/login")}
+              style={styles.boton}
+              accessibilityRole="button"
+            >
+              <Text style={styles.botonTexto}>Iniciar sesión</Text>
+            </Pressable>
+          )}
+
+          {acceso === "huella-cancelada" && (
+            <Pressable
+              onPress={() => setIntentoAcceso((n) => n + 1)}
+              style={styles.boton}
+              accessibilityRole="button"
+            >
+              <Text style={styles.botonTexto}>Reintentar con huella</Text>
+            </Pressable>
+          )}
+
+          <Pressable
+            onPress={() => router.back()}
+            style={styles.botonSecundario}
+            accessibilityRole="button"
+          >
+            <Text style={styles.botonSecundarioTexto}>Volver</Text>
+          </Pressable>
+        </View>
+      </>
+    );
+  }
 
   if (!permiso) {
     return (

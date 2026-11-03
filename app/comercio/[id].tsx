@@ -372,6 +372,15 @@ export default function ComercioDetalleScreen() {
   async function cambiarFavorito() {
     if (!comercio) return;
 
+    // Sin cuenta no se guardan favoritos: se manda a iniciar sesión.
+    const sesionActual = await obtenerUsuarioSesionId();
+
+    if (!sesionActual) {
+      router.push("/login");
+
+      return;
+    }
+
     const nuevoEstado = await alternarFavorito(comercio.id);
 
     setFavorito(nuevoEstado);

@@ -70,6 +70,11 @@ export async function quitarFavorito(comercioId: string): Promise<void> {
 }
 
 export async function alternarFavorito(comercioId: string): Promise<boolean> {
+  // Sin sesión no se guarda nada: se devuelve "no favorito" en vez de mentir.
+  if (!(await obtenerUsuarioActual())) {
+    return false;
+  }
+
   const favoritoActual = await esFavorito(comercioId);
 
   if (favoritoActual) {

@@ -1,4 +1,5 @@
-import { pedir } from "./api";
+import { ErrorApi, pedir } from "./api";
+import { cerrarSesion } from "./sesion";
 import { usuariosMock } from "../mocks/usuarios";
 import { Usuario } from "../tipos/modelos";
 
@@ -63,11 +64,20 @@ export async function registrarUsuario(
   return { usuario: respuesta.usuario, token: respuesta.token };
 }
 
-/** El usuario de la sesión, preguntándole a la API (GET /yo). */
+/**
+ * El usuario de la sesión, preguntándole a la API (GET /yo).
+ * Si el token venció o ya no vale (401 NO_AUTENTICADO) se cierra la sesión
+ * guardada, así la app vuelve a pedir el ingreso en vez de quedar a medias.
+ * Ante cualquier otro fallo (sin red, API caída) la sesión se conserva.
+ */
 export async function obtenerUsuarioActual(): Promise<Usuario | null> {
   try {
     return await pedir<Usuario>("/yo", { conSesion: true });
-  } catch {
+  } catch (error) {
+    if (error instanceof ErrorApi && error.codigo === "NO_AUTENTICADO") {
+      await cerrarSesion();
+    }
+
     return null;
   }
 }

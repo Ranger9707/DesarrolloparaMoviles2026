@@ -11,6 +11,7 @@ import {
 
 import { registrarUsuario } from "../src/servicios/autenticacion";
 import { guardarSesion } from "../src/servicios/sesion";
+import { validarRegistro } from "../src/utils/autenticacion";
 
 export default function RegistroScreen() {
   const [nombre, setNombre] = useState("");
@@ -22,18 +23,15 @@ export default function RegistroScreen() {
   const [error, setError] = useState<string | null>(null);
 
   async function manejarRegistro() {
-    if (
-      !nombre.trim() ||
-      !email.trim() ||
-      !password.trim() ||
-      !confirmarPassword.trim()
-    ) {
-      setError("Debe completar todos los campos.");
-      return;
-    }
+    const errorDeValidacion = validarRegistro(
+      nombre,
+      email,
+      password,
+      confirmarPassword,
+    );
 
-    if (password !== confirmarPassword) {
-      setError("Las contraseñas no coinciden.");
+    if (errorDeValidacion) {
+      setError(errorDeValidacion);
       return;
     }
 
@@ -105,7 +103,7 @@ export default function RegistroScreen() {
         <TextInput
           value={password}
           onChangeText={setPassword}
-          placeholder="Mínimo 6 caracteres"
+          placeholder="Mínimo 8 caracteres"
           secureTextEntry
           autoCapitalize="none"
           style={styles.input}
