@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { router, Stack } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 
+import { useTema } from "../src/contexto/tema";
 import {
   guardarArchivoLocal,
   subirArchivo,
@@ -24,6 +25,8 @@ import {
 import { validarVideoComercio } from "../src/utils/multimedia-comercio";
 
 function VideoPublicado({ uri }: { uri: string }) {
+  const { colores } = useTema();
+  const styles = useMemo(() => crearEstilos(colores), [colores]);
   const player = useVideoPlayer(uri, (instancia) => {
     instancia.loop = false;
   });
@@ -40,6 +43,8 @@ function VideoPublicado({ uri }: { uri: string }) {
 }
 
 export default function ImagenComercioScreen() {
+  const { colores } = useTema();
+  const styles = useMemo(() => crearEstilos(colores), [colores]);
   const [imagenes, setImagenes] = useState<string[]>([]);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [imagenLocal, setImagenLocal] = useState<string | null>(null);
@@ -339,8 +344,8 @@ export default function ImagenComercioScreen() {
   if (cargando) {
     return (
       <View style={styles.estado}>
-        <ActivityIndicator size="large" />
-        <Text>Cargando contenido...</Text>
+        <ActivityIndicator size="large" color={colores.primario} />
+        <Text style={styles.estadoTexto}>Cargando contenido...</Text>
       </View>
     );
   }
@@ -473,8 +478,8 @@ export default function ImagenComercioScreen() {
 
         {subiendo ? (
           <View style={styles.progreso}>
-            <ActivityIndicator />
-            <Text>Guardando y publicando...</Text>
+            <ActivityIndicator color={colores.primario} />
+            <Text style={styles.progresoTexto}>Guardando y publicando...</Text>
           </View>
         ) : null}
 
@@ -493,115 +498,134 @@ export default function ImagenComercioScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { flex: 1 },
-  container: { padding: 24, paddingBottom: 40 },
-  estado: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-  },
-  titulo: {
-    fontSize: 26,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-  subtitulo: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginTop: 24,
-    marginBottom: 10,
-  },
-  descripcion: {
-    fontSize: 16,
-    lineHeight: 22,
-    marginBottom: 16,
-  },
-  boton: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  botonQuitar: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: "center",
-    marginTop: 12,
-  },
-  botonQuitarTexto: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  deshabilitado: { opacity: 0.6 },
-  botonTexto: { fontSize: 16, fontWeight: "700" },
-  progreso: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 16,
-  },
-  error: {
-    marginTop: 12,
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  mensaje: {
-    marginTop: 12,
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  galeria: { gap: 10, paddingRight: 4 },
-  fotoGestion: {
-    width: 240,
-    gap: 8,
-  },
-  imagen: {
-    width: 240,
-    height: 170,
-    borderRadius: 12,
-  },
-  botonQuitarFoto: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 9,
-    alignItems: "center",
-  },
-  botonQuitarFotoTexto: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  video: {
-    width: "100%",
-    aspectRatio: 16 / 9,
-    backgroundColor: "#000",
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  vacio: {
-    marginTop: 12,
-    fontSize: 15,
-  },
-  local: {
-    marginTop: 12,
-    fontSize: 13,
-    opacity: 0.7,
-  },
-  separador: {
-    height: 1,
-    backgroundColor: "#D0D0D0",
-    marginVertical: 28,
-  },
-  botonSecundario: {
-    marginTop: 28,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  botonSecundarioTexto: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
-});
+function crearEstilos(colores: ReturnType<typeof useTema>["colores"]) {
+  return StyleSheet.create({
+    scroll: { flex: 1, backgroundColor: colores.fondo },
+    container: { padding: 24, paddingBottom: 40 },
+    estado: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 12,
+      backgroundColor: colores.fondo,
+    },
+    estadoTexto: { fontSize: 15, color: colores.secundario },
+    titulo: {
+      fontSize: 26,
+      fontWeight: "700",
+      marginBottom: 12,
+      color: colores.texto,
+    },
+    subtitulo: {
+      fontSize: 18,
+      fontWeight: "700",
+      marginTop: 24,
+      marginBottom: 10,
+      color: colores.texto,
+    },
+    descripcion: {
+      fontSize: 16,
+      lineHeight: 22,
+      marginBottom: 16,
+      color: colores.secundario,
+    },
+    boton: {
+      borderWidth: 1,
+      borderColor: colores.primario,
+      backgroundColor: colores.comercioFondo,
+      borderRadius: 10,
+      paddingVertical: 14,
+      alignItems: "center",
+      marginBottom: 12,
+    },
+    botonQuitar: {
+      borderWidth: 1,
+      borderColor: colores.borde,
+      borderRadius: 10,
+      paddingVertical: 12,
+      alignItems: "center",
+      marginTop: 12,
+    },
+    botonQuitarTexto: {
+      fontSize: 15,
+      fontWeight: "700",
+      color: colores.peligro,
+    },
+    deshabilitado: { opacity: 0.6 },
+    botonTexto: { fontSize: 16, fontWeight: "700", color: colores.primario },
+    progreso: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      marginTop: 16,
+    },
+    progresoTexto: { fontSize: 14, color: colores.secundario },
+    error: {
+      marginTop: 12,
+      fontSize: 15,
+      fontWeight: "600",
+      color: colores.cerrado,
+    },
+    mensaje: {
+      marginTop: 12,
+      fontSize: 15,
+      fontWeight: "600",
+      color: colores.abierto,
+    },
+    galeria: { gap: 10, paddingRight: 4 },
+    fotoGestion: {
+      width: 240,
+      gap: 8,
+    },
+    imagen: {
+      width: 240,
+      height: 170,
+      borderRadius: 12,
+    },
+    botonQuitarFoto: {
+      borderWidth: 1,
+      borderColor: colores.borde,
+      borderRadius: 10,
+      paddingVertical: 9,
+      alignItems: "center",
+    },
+    botonQuitarFotoTexto: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: colores.peligro,
+    },
+    video: {
+      width: "100%",
+      aspectRatio: 16 / 9,
+      backgroundColor: "#000",
+      borderRadius: 12,
+      overflow: "hidden",
+    },
+    vacio: {
+      marginTop: 12,
+      fontSize: 15,
+      color: colores.secundario,
+    },
+    local: {
+      marginTop: 12,
+      fontSize: 13,
+      opacity: 0.7,
+      color: colores.secundario,
+    },
+    separador: {
+      height: 1,
+      backgroundColor: colores.borde,
+      marginVertical: 28,
+    },
+    botonSecundario: {
+      marginTop: 28,
+      paddingVertical: 12,
+      alignItems: "center",
+    },
+    botonSecundarioTexto: {
+      fontSize: 15,
+      fontWeight: "600",
+      color: colores.secundario,
+    },
+  });
+}

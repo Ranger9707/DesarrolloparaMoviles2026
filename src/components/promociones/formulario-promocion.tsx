@@ -243,7 +243,7 @@ function crearEstilos(colores?: ColoresTema) {
     },
     interruptorTextoBloque: { flex: 1, gap: 4 },
     ayuda: { fontSize: 13, lineHeight: 18, color: colores?.secundario ?? "#666" },
-    error: { color: "#B3261E", fontWeight: "600" },
+    error: { color: colores?.peligro ?? "#B3261E", fontWeight: "600" },
     botones: { flexDirection: "row", gap: 12, marginTop: 8 },
     botonGuardar: {
       flex: 1,

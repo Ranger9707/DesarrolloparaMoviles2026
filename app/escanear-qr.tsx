@@ -1,6 +1,6 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router, Stack } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 
+import { useTema } from "../src/contexto/tema";
 import { obtenerUsuarioPorId } from "../src/servicios/autenticacion";
 import {
   confirmarAccionExitosa,
@@ -28,6 +29,8 @@ type EstadoQr =
   | "confirmado";
 
 export default function EscanearQrScreen() {
+  const { colores } = useTema();
+  const styles = useMemo(() => crearEstilos(colores), [colores]);
   const [permiso, solicitarPermiso] = useCameraPermissions();
 
   const [estadoQr, setEstadoQr] = useState<EstadoQr>("escaneando");
@@ -41,7 +44,7 @@ export default function EscanearQrScreen() {
   if (!permiso) {
     return (
       <View style={styles.estadoContainer}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={colores.primario} />
         <Text style={styles.estadoTexto}>Verificando permiso de cámara...</Text>
       </View>
     );
@@ -208,7 +211,7 @@ export default function EscanearQrScreen() {
 
         {estadoQr === "validando" && (
           <View style={styles.estadoContainer}>
-            <ActivityIndicator size="large" />
+            <ActivityIndicator size="large" color={colores.primario} />
             <Text style={styles.estadoTexto}>Validando código...</Text>
           </View>
         )}
@@ -238,7 +241,7 @@ export default function EscanearQrScreen() {
               accessibilityRole="button"
             >
               {confirmando ? (
-                <ActivityIndicator />
+                <ActivityIndicator color={colores.primario} />
               ) : (
                 <Text style={styles.botonTexto}>
                   Confirmar uso de promoción
@@ -327,105 +330,123 @@ export default function EscanearQrScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+function crearEstilos(colores: ReturnType<typeof useTema>["colores"]) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colores.fondo,
+    },
 
-  camara: {
-    flex: 1,
-  },
+    camara: {
+      flex: 1,
+    },
 
-  instrucciones: {
-    padding: 18,
-  },
+    instrucciones: {
+      padding: 18,
+      backgroundColor: colores.tarjeta,
+    },
 
-  instruccionesTitulo: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 6,
-  },
+    instruccionesTitulo: {
+      fontSize: 20,
+      fontWeight: "700",
+      marginBottom: 6,
+      color: colores.texto,
+    },
 
-  instruccionesTexto: {
-    fontSize: 15,
-    lineHeight: 21,
-  },
+    instruccionesTexto: {
+      fontSize: 15,
+      lineHeight: 21,
+      color: colores.secundario,
+    },
 
-  estadoContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24,
-    gap: 14,
-  },
+    estadoContainer: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 24,
+      gap: 14,
+      backgroundColor: colores.fondo,
+    },
 
-  estadoTexto: {
-    fontSize: 16,
-    lineHeight: 22,
-    textAlign: "center",
-  },
+    estadoTexto: {
+      fontSize: 16,
+      lineHeight: 22,
+      textAlign: "center",
+      color: colores.secundario,
+    },
 
-  resultadoContainer: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-  },
+    resultadoContainer: {
+      flex: 1,
+      justifyContent: "center",
+      padding: 24,
+      backgroundColor: colores.fondo,
+    },
 
-  titulo: {
-    fontSize: 26,
-    fontWeight: "700",
-    marginBottom: 20,
-  },
+    titulo: {
+      fontSize: 26,
+      fontWeight: "700",
+      marginBottom: 20,
+      color: colores.texto,
+    },
 
-  label: {
-    fontSize: 14,
-    fontWeight: "700",
-    marginTop: 10,
-    marginBottom: 4,
-  },
+    label: {
+      fontSize: 14,
+      fontWeight: "700",
+      marginTop: 10,
+      marginBottom: 4,
+      color: colores.secundario,
+    },
 
-  valor: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
+    valor: {
+      fontSize: 16,
+      marginBottom: 8,
+      color: colores.texto,
+    },
 
-  error: {
-    fontSize: 15,
-    lineHeight: 21,
-    marginVertical: 12,
-  },
+    error: {
+      fontSize: 15,
+      lineHeight: 21,
+      marginVertical: 12,
+      color: colores.cerrado,
+    },
 
-  exito: {
-    fontSize: 16,
-    lineHeight: 22,
-    marginBottom: 16,
-  },
+    exito: {
+      fontSize: 16,
+      lineHeight: 22,
+      marginBottom: 16,
+      color: colores.abierto,
+    },
 
-  boton: {
-    marginTop: 18,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
+    boton: {
+      marginTop: 18,
+      borderWidth: 1,
+      borderColor: colores.primario,
+      backgroundColor: colores.primario,
+      borderRadius: 10,
+      paddingVertical: 14,
+      alignItems: "center",
+    },
 
-  botonDeshabilitado: {
-    opacity: 0.6,
-  },
+    botonDeshabilitado: {
+      opacity: 0.6,
+    },
 
-  botonTexto: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
+    botonTexto: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: "#FFFFFF",
+    },
 
-  botonSecundario: {
-    marginTop: 8,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
+    botonSecundario: {
+      marginTop: 8,
+      paddingVertical: 14,
+      alignItems: "center",
+    },
 
-  botonSecundarioTexto: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
-});
+    botonSecundarioTexto: {
+      fontSize: 15,
+      fontWeight: "600",
+      color: colores.primario,
+    },
+  });
+}

@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 
+import { useTema } from "../src/contexto/tema";
 import {
   actualizarMiComercio,
   obtenerMiComercio,
@@ -36,6 +37,8 @@ function horaValida(valor: string): boolean {
 }
 
 export default function MiComercioScreen() {
+  const { colores } = useTema();
+  const styles = useMemo(() => crearEstilos(colores), [colores]);
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [direccion, setDireccion] = useState("");
@@ -165,8 +168,8 @@ export default function MiComercioScreen() {
   if (cargando) {
     return (
       <View style={styles.estado}>
-        <ActivityIndicator size="large" />
-        <Text>Cargando datos del comercio...</Text>
+        <ActivityIndicator size="large" color={colores.primario} />
+        <Text style={styles.estadoTexto}>Cargando datos del comercio...</Text>
       </View>
     );
   }
@@ -281,6 +284,7 @@ export default function MiComercioScreen() {
                       }
                       style={[styles.input, styles.horaInput]}
                       placeholder="08:00"
+                      placeholderTextColor={colores.secundario}
                       maxLength={5}
                       keyboardType="numbers-and-punctuation"
                       accessibilityLabel={`Apertura ${nombresDias[dia]}`}
@@ -295,6 +299,7 @@ export default function MiComercioScreen() {
                       }
                       style={[styles.input, styles.horaInput]}
                       placeholder="12:00"
+                      placeholderTextColor={colores.secundario}
                       maxLength={5}
                       keyboardType="numbers-and-punctuation"
                       accessibilityLabel={`Cierre ${nombresDias[dia]}`}
@@ -326,7 +331,7 @@ export default function MiComercioScreen() {
           accessibilityLabel="Guardar cambios del comercio"
         >
           {guardando ? (
-            <ActivityIndicator />
+            <ActivityIndicator color="#FFFFFF" />
           ) : (
             <Text style={styles.botonTexto}>Guardar cambios</Text>
           )}
@@ -336,65 +341,95 @@ export default function MiComercioScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { flex: 1 },
-  container: { padding: 24, paddingBottom: 40 },
-  estado: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    padding: 24,
-  },
-  title: { fontSize: 26, fontWeight: "700", marginBottom: 8 },
-  descripcion: { fontSize: 15, lineHeight: 21, marginBottom: 18 },
-  seccionTitulo: { fontSize: 20, fontWeight: "700", marginBottom: 8 },
-  ayuda: { fontSize: 14, lineHeight: 20, marginBottom: 12 },
-  label: {
-    fontSize: 14,
-    fontWeight: "700",
-    marginTop: 12,
-    marginBottom: 6,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-  },
-  area: { minHeight: 110 },
-  separador: { height: 1, backgroundColor: "#D0D0D0", marginVertical: 24 },
-  diaBloque: { marginBottom: 18, gap: 8 },
-  diaEncabezado: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  diaNombre: { fontSize: 16, fontWeight: "700" },
-  botonAgregar: { paddingVertical: 6, paddingHorizontal: 8 },
-  botonAgregarTexto: { fontSize: 13, fontWeight: "700" },
-  cerradoTexto: { fontSize: 14, opacity: 0.65 },
-  horarioFila: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flexWrap: "wrap",
-  },
-  horaInput: { width: 86, paddingVertical: 9 },
-  hasta: { fontSize: 14 },
-  botonQuitar: { paddingVertical: 8, paddingHorizontal: 8 },
-  botonQuitarTexto: { fontSize: 13, fontWeight: "600" },
-  error: { marginTop: 16, fontSize: 14, fontWeight: "600" },
-  mensaje: { marginTop: 16, fontSize: 14, fontWeight: "600" },
-  boton: {
-    marginTop: 24,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  botonDeshabilitado: { opacity: 0.6 },
-  botonTexto: { fontSize: 16, fontWeight: "700" },
-});
+function crearEstilos(colores: ReturnType<typeof useTema>["colores"]) {
+  return StyleSheet.create({
+    scroll: { flex: 1, backgroundColor: colores.fondo },
+    container: { padding: 24, paddingBottom: 40 },
+    estado: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 12,
+      padding: 24,
+      backgroundColor: colores.fondo,
+    },
+    estadoTexto: { fontSize: 15, color: colores.secundario },
+    title: {
+      fontSize: 26,
+      fontWeight: "700",
+      marginBottom: 8,
+      color: colores.texto,
+    },
+    descripcion: {
+      fontSize: 15,
+      lineHeight: 21,
+      marginBottom: 18,
+      color: colores.secundario,
+    },
+    seccionTitulo: {
+      fontSize: 20,
+      fontWeight: "700",
+      marginBottom: 8,
+      color: colores.texto,
+    },
+    ayuda: {
+      fontSize: 14,
+      lineHeight: 20,
+      marginBottom: 12,
+      color: colores.secundario,
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: "700",
+      marginTop: 12,
+      marginBottom: 6,
+      color: colores.texto,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: colores.borde,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontSize: 16,
+      backgroundColor: colores.superficie,
+      color: colores.texto,
+    },
+    area: { minHeight: 110 },
+    separador: { height: 1, backgroundColor: colores.borde, marginVertical: 24 },
+    diaBloque: { marginBottom: 18, gap: 8 },
+    diaEncabezado: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+    },
+    diaNombre: { fontSize: 16, fontWeight: "700", color: colores.texto },
+    botonAgregar: { paddingVertical: 6, paddingHorizontal: 8 },
+    botonAgregarTexto: { fontSize: 13, fontWeight: "700", color: colores.primario },
+    cerradoTexto: { fontSize: 14, opacity: 0.65, color: colores.secundario },
+    horarioFila: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      flexWrap: "wrap",
+    },
+    horaInput: { width: 86, paddingVertical: 9 },
+    hasta: { fontSize: 14, color: colores.secundario },
+    botonQuitar: { paddingVertical: 8, paddingHorizontal: 8 },
+    botonQuitarTexto: { fontSize: 13, fontWeight: "600", color: colores.peligro },
+    error: { marginTop: 16, fontSize: 14, fontWeight: "600", color: colores.cerrado },
+    mensaje: { marginTop: 16, fontSize: 14, fontWeight: "600", color: colores.abierto },
+    boton: {
+      marginTop: 24,
+      borderWidth: 1,
+      borderColor: colores.primario,
+      backgroundColor: colores.primario,
+      borderRadius: 10,
+      paddingVertical: 14,
+      alignItems: "center",
+    },
+    botonDeshabilitado: { opacity: 0.6 },
+    botonTexto: { fontSize: 16, fontWeight: "700", color: "#FFFFFF" },
+  });
+}
