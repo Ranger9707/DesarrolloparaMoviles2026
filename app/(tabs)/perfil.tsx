@@ -538,7 +538,7 @@ function PreferenciasAvisos({
         />
       </View>
 
-      <Text style={styles.interruptorTitulo}>Rubros de interés</Text>
+      <Text style={styles.rubrosEtiqueta}>Rubros de interés</Text>
 
       {rubros.length === 0 ? (
         <Text style={styles.interruptorAyuda}>Cargando rubros…</Text>
@@ -822,8 +822,9 @@ function crearEstilos(colores: ReturnType<typeof useTema>["colores"]) {
       flexDirection: "row",
       alignItems: "center",
       gap: 12,
-      padding: 12,
-      borderRadius: 12,
+      padding: 14,
+      borderRadius: 14,
+      marginTop: 14,
       backgroundColor: colores.superficie,
     },
     interruptorTextos: {
@@ -840,17 +841,26 @@ function crearEstilos(colores: ReturnType<typeof useTema>["colores"]) {
       lineHeight: 18,
       color: colores.secundario,
     },
+    rubrosEtiqueta: {
+      fontSize: 12,
+      fontWeight: "800",
+      color: colores.secundario,
+      textTransform: "uppercase",
+      letterSpacing: 0.7,
+      marginTop: 18,
+      marginBottom: 10,
+    },
     chipsContainer: {
       flexDirection: "row",
       flexWrap: "wrap",
-      gap: 8,
+      gap: 10,
     },
     chip: {
       borderWidth: 1,
       borderColor: colores.borde,
       borderRadius: 999,
-      paddingHorizontal: 12,
-      paddingVertical: 7,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
       backgroundColor: colores.superficie,
     },
     chipSeleccionado: {
@@ -870,6 +880,7 @@ function crearEstilos(colores: ReturnType<typeof useTema>["colores"]) {
       fontSize: 13,
       fontWeight: "600",
       color: colores.cerrado,
+      marginTop: 12,
     },
   });
 }
