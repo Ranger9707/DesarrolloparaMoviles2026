@@ -65,7 +65,7 @@ El cliente pidió explícitamente en su documento: *"Este documento tiene huecos
 ## D. Desviaciones menores del mockup ("Cómo me imagino que se usa" — no es normativo)
 
 1. **"Mostrar mi código"** está en el **detalle de la promoción**, no dentro de la tarjeta de la ficha como dibuja el mockup. Razón: el botón abre QR + código en texto + instrucciones, que no caben bien en la tarjeta; es un toque más de distancia.
-2. **El listado principal no muestra "a 300 m"** por tarjeta (el mockup la dibuja). La distancia está en el **mapa**, donde el PRD la exige ("ordenar el listado por distancia"). El listado principal muestra dirección y, como el resto de pantallas, avisa cuando muestra datos guardados sin conexión.
+2. ~~**El listado principal no muestra "a 300 m"** por tarjeta (el mockup la dibuja).~~ **Cerrado:** el listado muestra el chip "a X m" por tarjeta (`obtenerUbicacionSiConcedida`: usa el permiso solo si ya fue concedido — pedírselo sigue siendo rol del mapa). El orden del listado no es por distancia: el PRD exige ese orden en el mapa, donde ya se aplica.
 3. La tab que el mockup llama **"Buscar"** se llama **"Comercios"** — describe mejor su contenido.
 4. Las tarjetas del listado no muestran la línea **"PROMO: 15% en pinturas"** del mockup (la promo vigente se ve completa al entrar al comercio; el punto de entrada es la pestaña Promos).
 
