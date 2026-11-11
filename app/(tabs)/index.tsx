@@ -1,10 +1,11 @@
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { Image } from "expo-image";
 import { Link } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -74,6 +75,7 @@ export default function ComerciosScreen() {
   const [soloAbiertos, setSoloAbiertos] = useState(false);
   const [preferenciasCargadas, setPreferenciasCargadas] = useState(false);
   const [cargando, setCargando] = useState(true);
+  const [refrescando, setRefrescando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ubicacionUsuario, setUbicacionUsuario] = useState<UbicacionUsuario | null>(
     null,
@@ -121,32 +123,49 @@ export default function ComerciosScreen() {
       .catch(() => setUbicacionUsuario(null));
   }, []);
 
+  // Red primero con cache de reserva: el pull-to-refresh y el efecto de
+  // filtros comparten la misma revalidación contra la API.
+  const cargarComercios = useCallback(async function () {
+    try {
+      setError(null);
+
+      const datos = await buscarComercios(
+        textoBusqueda,
+        rubroSeleccionado,
+        soloAbiertos,
+      );
+
+      setComercios(datos);
+    } catch {
+      setError("No fue posible cargar los comercios.");
+    }
+  }, [textoBusqueda, rubroSeleccionado, soloAbiertos]);
+
   useEffect(() => {
     if (!preferenciasCargadas) {
       return;
     }
 
-    async function cargarComercios() {
-      try {
-        setCargando(true);
-        setError(null);
-
-        const datos = await buscarComercios(
-          textoBusqueda,
-          rubroSeleccionado,
-          soloAbiertos,
-        );
-
-        setComercios(datos);
-      } catch {
-        setError("No fue posible cargar los comercios.");
-      } finally {
-        setCargando(false);
-      }
+    async function mostrarCarga() {
+      setCargando(true);
+      await cargarComercios();
+      setCargando(false);
     }
 
-    cargarComercios();
-  }, [textoBusqueda, rubroSeleccionado, soloAbiertos, preferenciasCargadas]);
+    void mostrarCarga();
+  }, [cargarComercios, preferenciasCargadas]);
+
+  // Pull-to-refresh: la lista queda visible mientras el control muestra el
+  // spinner; el colapso a "Buscando comercios" queda solo para los filtros.
+  async function refrescarComercios() {
+    setRefrescando(true);
+
+    try {
+      await cargarComercios();
+    } finally {
+      setRefrescando(false);
+    }
+  }
 
   async function seleccionarRubro(rubroId: string | null) {
     setRubroSeleccionado(rubroId);
@@ -331,6 +350,14 @@ export default function ComerciosScreen() {
         <ScrollView
           contentContainerStyle={styles.lista}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refrescando}
+              onRefresh={refrescarComercios}
+              colors={[colores.primario]}
+              tintColor={colores.primario}
+            />
+          }
         >
           <Text style={styles.resultadosTexto}>
             {comercios.length} {comercios.length === 1 ? "comercio" : "comercios"}
