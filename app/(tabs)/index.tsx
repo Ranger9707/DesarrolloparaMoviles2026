@@ -22,7 +22,15 @@ import {
   obtenerRubroSeleccionado,
 } from "../../src/servicios/preferencias";
 import { obtenerRubros } from "../../src/servicios/rubros";
+import {
+  obtenerUbicacionSiConcedida,
+  UbicacionUsuario,
+} from "../../src/servicios/ubicacion";
 import { Comercio, Rubro } from "../../src/tipos/modelos";
+import {
+  calcularDistanciaKm,
+  formatearDistancia,
+} from "../../src/utils/distancias";
 import { estaAbiertoAhora } from "../../src/utils/horarios";
 
 function EstadoComercio({ abierto }: { abierto: boolean }) {
@@ -67,6 +75,9 @@ export default function ComerciosScreen() {
   const [preferenciasCargadas, setPreferenciasCargadas] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [ubicacionUsuario, setUbicacionUsuario] = useState<UbicacionUsuario | null>(
+    null,
+  );
 
   const estadoRed = useEstadoRed();
 
@@ -99,6 +110,15 @@ export default function ComerciosScreen() {
     }
 
     cargarDatosIniciales();
+  }, []);
+
+  // Distancia por tarjeta como la dibuja el mockup ("a 300 m"): solo si el
+  // permiso de ubicación ya fue concedido (pedirlo es rol del mapa). Un
+  // problema de ubicación no afecta al listado: simplemente no hay chip.
+  useEffect(() => {
+    obtenerUbicacionSiConcedida()
+      .then(setUbicacionUsuario)
+      .catch(() => setUbicacionUsuario(null));
   }, []);
 
   useEffect(() => {
@@ -320,6 +340,9 @@ export default function ComerciosScreen() {
             const abierto = estaAbiertoAhora(comercio.horarios);
             const rubro = rubrosPorId.get(comercio.rubroId) ?? "Comercio";
             const imagen = comercio.imagenes[0] ?? null;
+            const distanciaKm = ubicacionUsuario
+              ? calcularDistanciaKm(ubicacionUsuario, comercio.coordenadas)
+              : null;
 
             return (
               <Link
@@ -386,6 +409,13 @@ export default function ComerciosScreen() {
                         <Text style={styles.direccion} numberOfLines={1}>
                           {comercio.direccion}
                         </Text>
+                        {distanciaKm !== null && (
+                          <View style={styles.distanciaChip}>
+                            <Text style={styles.distanciaTexto}>
+                              a {formatearDistancia(distanciaKm)}
+                            </Text>
+                          </View>
+                        )}
                       </View>
                     </View>
                   </View>
@@ -644,6 +674,17 @@ function crearEstilos(colores: ReturnType<typeof useTema>["colores"]) {
     flex: 1,
     fontSize: 12,
     color: colores.secundario,
+  },
+  distanciaChip: {
+    backgroundColor: colores.comercioFondo,
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+  },
+  distanciaTexto: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: colores.primario,
   },
   estadoContainer: {
     flex: 1,

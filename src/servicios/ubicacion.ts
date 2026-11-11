@@ -53,3 +53,16 @@ export async function obtenerUbicacionActual(): Promise<UbicacionUsuario | null>
     longitud: ubicacion.coords.longitude,
   };
 }
+
+/** Ubicación solo si el permiso ya fue concedido: nunca dispara el diálogo
+ * de permisos. La usa el listado principal para las distancias por tarjeta;
+ * pedir el permiso es rol del mapa, que es donde la ubicación es central. */
+export async function obtenerUbicacionSiConcedida(): Promise<UbicacionUsuario | null> {
+  const estado = await Location.getForegroundPermissionsAsync();
+
+  if (estado.status !== "granted") {
+    return null;
+  }
+
+  return obtenerUbicacionActual();
+}
