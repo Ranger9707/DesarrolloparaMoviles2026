@@ -31,6 +31,7 @@ import { prepararMultimediaComercio } from "../../src/servicios/archivos";
 import { ErrorApi } from "../../src/servicios/api";
 import { obtenerComercioPorId } from "../../src/servicios/comercios";
 import { alternarFavorito, esFavorito } from "../../src/servicios/favoritos";
+import { confirmarAccionExitosa } from "../../src/servicios/haptica";
 import { obtenerPromocionesPorComercio } from "../../src/servicios/promociones";
 import {
   borrarResena,
@@ -458,6 +459,8 @@ export default function ComercioDetalleScreen() {
 
     const nuevoEstado = await alternarFavorito(comercio.id);
     setFavorito(nuevoEstado);
+    // La tabla de capacidades del PRD pide vibración al guardar un favorito.
+    void confirmarAccionExitosa();
   }
 
   if (cargando) {
