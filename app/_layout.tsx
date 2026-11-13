@@ -3,7 +3,8 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { Stack } from "expo-router";
+import * as Notifications from "expo-notifications";
+import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
@@ -21,11 +22,28 @@ export const unstable_settings = {
 
 /*
  * Efectos globales que necesitan la app ya montada y la base lista:
- * sincronizar reseñas pendientes y revisar avisos de promociones.
+ * sincronizar reseñas pendientes, revisar avisos de promociones y
+ * navegar al detalle cuando el usuario toca una notificación.
  */
 function EfectosDeSegundoPlano() {
+  const router = useRouter();
   useSincronizacionResenas();
   useAvisosPromociones();
+
+  useEffect(() => {
+    const suscripcion = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const promocionId =
+          response.notification.request.content.data?.promocionId;
+
+        if (typeof promocionId === "string") {
+          router.push(`/promocion/${promocionId}`);
+        }
+      },
+    );
+
+    return () => suscripcion.remove();
+  }, [router]);
 
   return null;
 }

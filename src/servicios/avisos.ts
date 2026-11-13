@@ -2,13 +2,13 @@ import * as Notifications from "expo-notifications";
 import { SchedulableTriggerInputTypes } from "expo-notifications";
 import Storage from "expo-sqlite/kv-store";
 
-import { obtenerUsuarioActual } from "./autenticacion";
-import { obtenerComerciosCache } from "./cache";
-import { obtenerPromociones } from "./promociones";
 import {
   estaPorVencer,
   filtrarPromocionesDeInteres,
 } from "../utils/promociones";
+import { obtenerUsuarioActual } from "./autenticacion";
+import { obtenerComerciosCache } from "./cache";
+import { obtenerPromociones } from "./promociones";
 
 /*
  * Avisos de promociones como NOTIFICACIONES LOCALES (decisión C6 de la
@@ -49,11 +49,16 @@ async function guardarIds(clave: string, ids: string[]): Promise<void> {
   await Storage.setItem(clave, JSON.stringify(ids));
 }
 
-async function notificar(titulo: string, cuerpo: string): Promise<void> {
+async function notificar(
+  titulo: string,
+  cuerpo: string,
+  promocionId: string,
+): Promise<void> {
   await Notifications.scheduleNotificationAsync({
     content: {
       title: titulo,
       body: cuerpo,
+      data: { promocionId },
     },
     trigger: {
       type: SchedulableTriggerInputTypes.DATE,
@@ -120,6 +125,7 @@ export async function revisarAvisosDePromociones(): Promise<number> {
       await notificar(
         "Nueva promoción",
         `${promocion.titulo} — ${comercio}`,
+        promocion.id,
       );
 
       avisos += 1;
@@ -144,6 +150,7 @@ export async function revisarAvisosDePromociones(): Promise<number> {
     await notificar(
       "Tu promoción está por vencer",
       `${promocion.titulo} (${comercio}) vence el ${new Date(promocion.hasta).toLocaleDateString("es-AR")}.`,
+      promocion.id,
     );
 
     enviadas.add(promocion.id);

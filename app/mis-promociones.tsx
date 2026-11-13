@@ -14,6 +14,8 @@ import {
 
 import { FormularioPromocion } from "../src/components/promociones/formulario-promocion";
 import { useTema } from "../src/contexto/tema";
+import { obtenerUsuarioActual } from "../src/servicios/autenticacion";
+import { revisarAvisosDePromociones } from "../src/servicios/avisos";
 import { confirmarAccionExitosa } from "../src/servicios/haptica";
 import {
   CuerpoPromocionComercio,
@@ -22,7 +24,6 @@ import {
   editarPromocionComercio,
   listarMisPromociones,
 } from "../src/servicios/mi-comercio";
-import { obtenerUsuarioActual } from "../src/servicios/autenticacion";
 import { Promocion } from "../src/tipos/modelos";
 import { estadoDePromocion } from "../src/utils/promociones";
 
@@ -106,6 +107,7 @@ export default function MisPromocionesScreen() {
       await editarPromocionComercio(promocionEditando.id, cuerpo);
     } else {
       await crearPromocionComercio(cuerpo);
+      await revisarAvisosDePromociones().catch(() => {});
     }
 
     await confirmarAccionExitosa();
