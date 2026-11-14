@@ -44,3 +44,5 @@ app-example
 Expo-Go-*.apk
 .env
 .claude/
+
+.idea/
