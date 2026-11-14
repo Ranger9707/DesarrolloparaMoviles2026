@@ -219,6 +219,10 @@ Respecto del backup, también entran: `src/servicios/avisos.ts` (revisión de pr
 
 <img src="capturas/avisos-notificacion-promo-nueva.png" width="320" alt="Aviso de promo nueva" />
 
+### Tocar el aviso abre el detalle de la promoción (aporte de Gaby, integrado)
+
+Cada notificación viaja con `data: { promocionId }` (`src/servicios/avisos.ts`) y `app/_layout.tsx` escucha `addNotificationResponseReceivedListener`: al tocar el aviso, la app navega al detalle de esa promoción. Además, al publicar una promoción desde `mis-promociones` se corre una revisión de avisos de **este dispositivo** — las notificaciones son locales, así que el vecino descubre la promo nueva en su próxima revisión periódica (al volver a primer plano, máx. cada 5 minutos), no por push.
+
 ---
 
 ## Cómo correr el proyecto

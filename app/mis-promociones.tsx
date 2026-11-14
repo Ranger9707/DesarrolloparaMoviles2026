@@ -22,6 +22,7 @@ import {
   editarPromocionComercio,
   listarMisPromociones,
 } from "../src/servicios/mi-comercio";
+import { revisarAvisosDePromociones } from "../src/servicios/avisos";
 import { obtenerUsuarioActual } from "../src/servicios/autenticacion";
 import { Promocion } from "../src/tipos/modelos";
 import { estadoDePromocion } from "../src/utils/promociones";
@@ -106,6 +107,12 @@ export default function MisPromocionesScreen() {
       await editarPromocionComercio(promocionEditando.id, cuerpo);
     } else {
       await crearPromocionComercio(cuerpo);
+
+      // Las notificaciones son LOCALES de cada dispositivo: esto acelera la
+      // revisión de avisos de ESTE dispositivo al publicar una promo. El
+      // vecino descubre la promo nueva en su próxima revisión periódica
+      // (al volver a primer plano, máx. cada 5 minutos) — no es push.
+      await revisarAvisosDePromociones().catch(() => {});
     }
 
     await confirmarAccionExitosa();

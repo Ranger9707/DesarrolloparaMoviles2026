@@ -49,11 +49,18 @@ async function guardarIds(clave: string, ids: string[]): Promise<void> {
   await Storage.setItem(clave, JSON.stringify(ids));
 }
 
-async function notificar(titulo: string, cuerpo: string): Promise<void> {
+// La notificación viaja con la promo en `data`: al tocarla, el listener de
+// _layout.tsx navega al detalle de esa promoción.
+async function notificar(
+  titulo: string,
+  cuerpo: string,
+  promocionId: string,
+): Promise<void> {
   await Notifications.scheduleNotificationAsync({
     content: {
       title: titulo,
       body: cuerpo,
+      data: { promocionId },
     },
     trigger: {
       type: SchedulableTriggerInputTypes.DATE,
@@ -120,6 +127,7 @@ export async function revisarAvisosDePromociones(): Promise<number> {
       await notificar(
         "Nueva promoción",
         `${promocion.titulo} — ${comercio}`,
+        promocion.id,
       );
 
       avisos += 1;
@@ -144,6 +152,7 @@ export async function revisarAvisosDePromociones(): Promise<number> {
     await notificar(
       "Tu promoción está por vencer",
       `${promocion.titulo} (${comercio}) vence el ${new Date(promocion.hasta).toLocaleDateString("es-AR")}.`,
+      promocion.id,
     );
 
     enviadas.add(promocion.id);
