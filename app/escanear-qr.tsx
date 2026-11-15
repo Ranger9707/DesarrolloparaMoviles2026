@@ -10,23 +10,16 @@ import {
 } from "react-native";
 
 import { useTema } from "../src/contexto/tema";
-import { obtenerUsuarioPorId } from "../src/servicios/autenticacion";
 import {
   confirmarAccionExitosa,
   informarError,
 } from "../src/servicios/haptica";
 import { notificarPromocionRegistrada } from "../src/servicios/notificaciones";
 import { obtenerPromocionPorId } from "../src/servicios/promociones";
-import { registrarUsoPromocion } from "../src/servicios/usos-promociones";
-import { Promocion, Usuario } from "../src/tipos/modelos";
-import { DatosQrPromocion, interpretarQrPromocion } from "../src/utils/qr";
+import { validarCodigoCliente } from "../src/servicios/usos-promociones";
+import { Promocion, UsoDePromocion } from "../src/tipos/modelos";
 
-type EstadoQr =
-  | "escaneando"
-  | "validando"
-  | "valido"
-  | "invalido"
-  | "confirmado";
+type EstadoQr = "escaneando" | "validando" | "valido" | "invalido";
 
 export default function EscanearQrScreen() {
   const { colores } = useTema();
@@ -35,11 +28,9 @@ export default function EscanearQrScreen() {
 
   const [estadoQr, setEstadoQr] = useState<EstadoQr>("escaneando");
   const [codigoLeido, setCodigoLeido] = useState<string | null>(null);
-  const [datosQr, setDatosQr] = useState<DatosQrPromocion | null>(null);
+  const [uso, setUso] = useState<UsoDePromocion | null>(null);
   const [promocion, setPromocion] = useState<Promocion | null>(null);
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [mensajeError, setMensajeError] = useState<string | null>(null);
-  const [confirmando, setConfirmando] = useState(false);
 
   if (!permiso) {
     return (
@@ -88,97 +79,65 @@ export default function EscanearQrScreen() {
       return;
     }
 
+    const codigo = data.trim();
+
     setEstadoQr("validando");
-    setCodigoLeido(data);
+    setCodigoLeido(codigo);
     setMensajeError(null);
 
-    const datosInterpretados = interpretarQrPromocion(data);
-
-    if (!datosInterpretados) {
+    // El QR del vecino contiene el código generado por la API (POST
+    // /promociones/:id/usos). El formato viejo PROMO|... ya no se emite.
+    if (codigo.startsWith("PROMO|")) {
       await informarError();
 
       setEstadoQr("invalido");
-      setMensajeError("El código QR no corresponde a una promoción válida.");
+      setMensajeError(
+        "Este formato de código ya no se usa. Pedile al cliente que abra la promoción y muestre su código nuevo.",
+      );
+      return;
+    }
+
+    if (!codigo) {
+      await informarError();
+
+      setEstadoQr("invalido");
+      setMensajeError("El código QR está vacío.");
       return;
     }
 
     try {
-      const [promocionEncontrada, usuarioEncontrado] = await Promise.all([
-        obtenerPromocionPorId(datosInterpretados.promocionId),
-        obtenerUsuarioPorId(datosInterpretados.usuarioId),
-      ]);
+      const uso = await validarCodigoCliente(codigo);
 
-      if (!promocionEncontrada) {
-        await informarError();
+      const promocionEncontrada = await obtenerPromocionPorId(uso.promocionId);
 
-        setEstadoQr("invalido");
-        setMensajeError("La promoción indicada en el código no existe.");
-        return;
-      }
-
-      if (!promocionEncontrada.activa) {
-        await informarError();
-
-        setEstadoQr("invalido");
-        setMensajeError("La promoción ya no se encuentra activa.");
-        return;
-      }
-
-      if (!usuarioEncontrado) {
-        await informarError();
-
-        setEstadoQr("invalido");
-        setMensajeError("El usuario indicado en el código no existe.");
-        return;
-      }
-
-      setDatosQr(datosInterpretados);
+      setUso(uso);
       setPromocion(promocionEncontrada);
-      setUsuario(usuarioEncontrado);
-      setEstadoQr("valido");
-    } catch {
-      await informarError();
-
-      setEstadoQr("invalido");
-      setMensajeError("No fue posible validar el código QR.");
-    }
-  }
-
-  async function manejarConfirmarUso() {
-    if (!datosQr || !promocion || !usuario || !codigoLeido) {
-      return;
-    }
-
-    try {
-      setConfirmando(true);
-      setMensajeError(null);
-
-      await registrarUsoPromocion(promocion.id, usuario.id, codigoLeido);
 
       await confirmarAccionExitosa();
 
-      await notificarPromocionRegistrada(promocion.titulo, usuario.nombre);
+      await notificarPromocionRegistrada(
+        promocionEncontrada?.titulo ?? "Promoción",
+        uso.codigo,
+      );
 
-      setEstadoQr("confirmado");
+      setEstadoQr("valido");
     } catch (errorDesconocido) {
       await informarError();
 
-      if (errorDesconocido instanceof Error) {
-        setMensajeError(errorDesconocido.message);
-      } else {
-        setMensajeError("No fue posible registrar el uso de la promoción.");
-      }
-    } finally {
-      setConfirmando(false);
+      setEstadoQr("invalido");
+      setMensajeError(
+        errorDesconocido instanceof Error
+          ? errorDesconocido.message
+          : "El código no pudo validarse.",
+      );
     }
   }
 
   function volverAEscanear() {
     setEstadoQr("escaneando");
     setCodigoLeido(null);
-    setDatosQr(null);
+    setUso(null);
     setPromocion(null);
-    setUsuario(null);
     setMensajeError(null);
   }
 
@@ -216,47 +175,44 @@ export default function EscanearQrScreen() {
           </View>
         )}
 
-        {estadoQr === "valido" && promocion && usuario && (
+        {estadoQr === "valido" && uso && (
           <View style={styles.resultadoContainer}>
-            <Text style={styles.titulo}>Código válido</Text>
+            <Text style={styles.titulo}>Uso registrado</Text>
+
+            <Text style={styles.exito}>
+              La promoción quedó registrada y su contador de usos se
+              actualizó.
+            </Text>
 
             <Text style={styles.label}>Promoción</Text>
-            <Text style={styles.valor}>{promocion.titulo}</Text>
+            <Text style={styles.valor}>
+              {promocion?.titulo ?? "Promoción"}
+            </Text>
 
-            <Text style={styles.label}>Detalle</Text>
-            <Text style={styles.valor}>{promocion.detalle}</Text>
+            <Text style={styles.label}>Código del cliente</Text>
+            <Text style={styles.valor}>{uso.codigo}</Text>
 
-            <Text style={styles.label}>Cliente</Text>
-            <Text style={styles.valor}>{usuario.nombre}</Text>
-
-            <Text style={styles.label}>Correo electrónico</Text>
-            <Text style={styles.valor}>{usuario.email}</Text>
+            <Text style={styles.label}>Registrado</Text>
+            <Text style={styles.valor}>
+              {new Date(uso.validadoEn ?? Date.now()).toLocaleString("es-AR")}
+            </Text>
 
             {mensajeError && <Text style={styles.error}>{mensajeError}</Text>}
 
             <Pressable
-              onPress={manejarConfirmarUso}
-              disabled={confirmando}
-              style={[styles.boton, confirmando && styles.botonDeshabilitado]}
+              onPress={volverAEscanear}
+              style={styles.boton}
               accessibilityRole="button"
             >
-              {confirmando ? (
-                <ActivityIndicator color={colores.primario} />
-              ) : (
-                <Text style={styles.botonTexto}>
-                  Confirmar uso de promoción
-                </Text>
-              )}
+              <Text style={styles.botonTexto}>Escanear otro código</Text>
             </Pressable>
 
             <Pressable
-              onPress={volverAEscanear}
+              onPress={() => router.back()}
               style={styles.botonSecundario}
               accessibilityRole="button"
             >
-              <Text style={styles.botonSecundarioTexto}>
-                Escanear otro código
-              </Text>
+              <Text style={styles.botonSecundarioTexto}>Finalizar</Text>
             </Pressable>
           </View>
         )}
@@ -294,37 +250,6 @@ export default function EscanearQrScreen() {
           </View>
         )}
 
-        {estadoQr === "confirmado" && promocion && usuario && (
-          <View style={styles.resultadoContainer}>
-            <Text style={styles.titulo}>Promoción registrada</Text>
-
-            <Text style={styles.exito}>
-              El uso de la promoción fue registrado correctamente.
-            </Text>
-
-            <Text style={styles.label}>Promoción</Text>
-            <Text style={styles.valor}>{promocion.titulo}</Text>
-
-            <Text style={styles.label}>Cliente</Text>
-            <Text style={styles.valor}>{usuario.nombre}</Text>
-
-            <Pressable
-              onPress={volverAEscanear}
-              style={styles.boton}
-              accessibilityRole="button"
-            >
-              <Text style={styles.botonTexto}>Escanear otro código</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => router.back()}
-              style={styles.botonSecundario}
-              accessibilityRole="button"
-            >
-              <Text style={styles.botonSecundarioTexto}>Finalizar</Text>
-            </Pressable>
-          </View>
-        )}
       </View>
     </>
   );

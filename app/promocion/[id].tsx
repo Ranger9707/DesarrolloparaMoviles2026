@@ -14,12 +14,15 @@ import QRCode from "react-native-qrcode-svg";
 import { useTema } from "../../src/contexto/tema";
 import { obtenerComercioPorId } from "../../src/servicios/comercios";
 import { obtenerUsuarioActual } from "../../src/servicios/autenticacion";
-import { obtenerUsosPromocion, promocionYaUtilizada } from "../../src/servicios/usos-promociones";
+import {
+  generarMiCodigo,
+  obtenerMiCodigo,
+  obtenerUsosPromocion,
+  promocionYaUtilizada,
+} from "../../src/servicios/usos-promociones";
 import { obtenerPromocionPorId } from "../../src/servicios/promociones";
 import { obtenerUsuarioSesionId } from "../../src/servicios/sesion";
-import { Comercio, Promocion } from "../../src/tipos/modelos";
-import { construirCodigoPromocion } from "../../src/utils/qr";
-
+import { Comercio, Promocion, UsoDePromocion } from "../../src/tipos/modelos";
 function formatearFecha(fecha: string): string {
   return new Date(fecha).toLocaleDateString("es-AR", {
     day: "2-digit",
@@ -37,6 +40,7 @@ export default function PromocionDetalleScreen() {
   const [comercio, setComercio] = useState<Comercio | null>(null);
   const [usuarioSesionId, setUsuarioSesionId] = useState<string | null>(null);
   const [esVecino, setEsVecino] = useState(false);
+  const [uso, setUso] = useState<UsoDePromocion | null>(null);
   const [fechaDeUso, setFechaDeUso] = useState<string | null>(null);
   const [codigoVisible, setCodigoVisible] = useState(false);
   const [cargando, setCargando] = useState(true);
@@ -64,16 +68,38 @@ export default function PromocionDetalleScreen() {
             .catch(() => setComercio(null));
         }
 
-        if (datos && sesionId) {
-          const usada = await promocionYaUtilizada(datos.id, sesionId);
+        if (datos && sesionId && usuarioActual?.rol === "vecino") {
+          // El código propio vive en la API (GET /yo/usos): un registro con
+          // validadoEn significa que ya se usó. Sin conexión, la tabla local
+          // conserva el último estado conocido de este dispositivo.
+          try {
+            const usoPropio = await obtenerMiCodigo(datos.id);
 
-          if (usada) {
-            const usos = await obtenerUsosPromocion();
-            const usoPropio = usos.find(
-              (uso) => uso.promocionId === datos.id && uso.usuarioId === sesionId,
+            if (usoPropio) {
+              setUso(usoPropio);
+
+              if (usoPropio.validadoEn) {
+                setFechaDeUso(usoPropio.validadoEn);
+              }
+            } else {
+              const generado = await generarMiCodigo(datos.id);
+
+              setUso(generado);
+            }
+          } catch {
+            const usada = await promocionYaUtilizada(datos.id, sesionId).catch(
+              () => false,
             );
 
-            setFechaDeUso(usoPropio?.validadoEn ?? null);
+            if (usada) {
+              const usos = await obtenerUsosPromocion();
+              const usoLocal = usos.find(
+                (uso) =>
+                  uso.promocionId === datos.id && uso.usuarioId === sesionId,
+              );
+
+              setFechaDeUso(usoLocal?.validadoEn ?? null);
+            }
           }
         }
       } catch {
@@ -124,9 +150,9 @@ export default function PromocionDetalleScreen() {
     );
   }
 
-  const codigoPromocion = usuarioSesionId
-    ? construirCodigoPromocion(promocion.id, usuarioSesionId)
-    : null;
+  // El QR contiene el código generado por la API: el comercio lo valida en
+  // el mostrador con POST /mi-comercio/usos/validar { codigo }.
+  const codigoPromocion = uso?.codigo ?? null;
   const promoUsada = fechaDeUso !== null;
 
   return (
@@ -275,24 +301,34 @@ export default function PromocionDetalleScreen() {
               </Pressable>
 
               {codigoVisible ? (
-                <View style={styles.bloqueCodigo}>
-                  <View style={styles.panelQr}>
-                    <QRCode
-                      value={codigoPromocion ?? ""}
-                      size={210}
-                      color="#111111"
-                      backgroundColor="#FFFFFF"
-                    />
+                codigoPromocion ? (
+                  <View style={styles.bloqueCodigo}>
+                    <View style={styles.panelQr}>
+                      <QRCode
+                        value={codigoPromocion}
+                        size={210}
+                        color="#111111"
+                        backgroundColor="#FFFFFF"
+                      />
+                    </View>
+
+                    <Text style={styles.codigoTexto}>{codigoPromocion}</Text>
+
+                    <Text style={styles.ayudaCodigo}>
+                      Mostrale este código al comercio en el mostrador. Lo
+                      puede escanear desde su perfil, o verificarlo con el
+                      código escrito si la cámara no funciona.
+                    </Text>
                   </View>
-
-                  <Text style={styles.codigoTexto}>{codigoPromocion}</Text>
-
-                  <Text style={styles.ayudaCodigo}>
-                    Mostrale este código al comercio en el mostrador. Lo puede
-                    escanear desde su perfil, o verificarlo con el código
-                    escrito si la cámara no funciona.
-                  </Text>
-                </View>
+                ) : (
+                  <View style={styles.bloqueCodigo}>
+                    <ActivityIndicator color={colores.primario} />
+                    <Text style={styles.ayudaCodigo}>
+                      Estamos generando tu código. Si no aparece, verificá tu
+                      conexión a internet.
+                    </Text>
+                  </View>
+                )
               ) : (
                 <Text style={styles.text}>
                   Generá tu código y presentalo en el local para que el

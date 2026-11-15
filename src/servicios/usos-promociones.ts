@@ -1,5 +1,50 @@
 import { UsoDePromocion } from "../tipos/modelos";
+import { pedir } from "./api";
 import { obtenerBaseDatos } from "./base-datos";
+
+/*
+ * El ciclo de vida de un código de promoción vive en la API de la cátedra:
+ * - el vecino GENERA su código con POST /promociones/:id/usos (uno por
+ *   vecino y promoción; repetir devuelve el mismo código hasta usarlo);
+ * - el comercio lo VALIDA con POST /mi-comercio/usos/validar { codigo },
+ *   que registra el uso, devuelve validadoEn y recalcula el contador de
+ *   usos de la promoción;
+ * - GET /yo/usos lista los códigos propios, usados o no.
+ * La tabla local de usos queda como registro de este dispositivo.
+ */
+
+/** Vecino: genera (o recupera) el código exclusivo de una promoción soloApp.
+ * Si ya lo usó, lanza ErrorApi con código PROMO_YA_USADA. */
+export async function generarMiCodigo(
+  promocionId: string,
+): Promise<UsoDePromocion> {
+  return pedir<UsoDePromocion>(`/promociones/${promocionId}/usos`, {
+    metodo: "POST",
+    conSesion: true,
+  });
+}
+
+/** Vecino: el código propio de una promoción, usado o no, si existe. */
+export async function obtenerMiCodigo(
+  promocionId: string,
+): Promise<UsoDePromocion | null> {
+  const usos = await pedir<UsoDePromocion[]>("/yo/usos?porPagina=100", {
+    conSesion: true,
+  });
+
+  return usos.find((uso) => uso.promocionId === promocionId) ?? null;
+}
+
+/** Comercio: valida en el mostrador el código escaneado del cliente. */
+export async function validarCodigoCliente(
+  codigo: string,
+): Promise<UsoDePromocion> {
+  return pedir<UsoDePromocion>("/mi-comercio/usos/validar", {
+    metodo: "POST",
+    conSesion: true,
+    cuerpo: { codigo },
+  });
+}
 
 export async function registrarUsoPromocion(
   promocionId: string,
