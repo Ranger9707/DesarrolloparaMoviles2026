@@ -25,18 +25,19 @@ Directorio móvil de comercios para **Concepción del Uruguay**: búsqueda y fil
 
 - Listado de comercios con búsqueda por nombre o producto, filtro por rubro y por "abierto ahora".
 - Ficha del comercio: fotos, video de presentación, horarios, teléfono, WhatsApp, Instagram y medios de pago.
-- Mapa con la ubicación del usuario, filtro por rubro, ordenamiento por distancia y botón "Ir" (abre Google Maps).
+- Mapa con la ubicación del usuario, filtro por rubro, ordenamiento por distancia y botón "Ir" (abre Google Maps para guiarte caminando o en auto).
 - Promociones por estado (vigentes, próximas, por vencer) y filtro por rubro; QR "Mostrar mi código" para promos exclusivas de la app.
-- Reseñas con estrellas y comentario; edición y borrado de la propia, reporte de reseñas ofensivas.
-- Favoritos, rubros de interés y avisos locales (promo nueva de un favorito o rubro elegido, promo por vencer).
-- Sesión persistente, reingreso con biometría, funcionamiento sin conexión con datos cacheados.
+- Reseñas con estrellas y comentario, ordenadas de la más nueva a la más vieja; edición y borrado de la propia, reporte de reseñas ofensivas.
+- Favoritos, rubros de interés y avisos locales (promo nueva de un favorito o rubro elegido, promo por vencer), con interruptor general para apagarlos.
+- Registro e inicio de sesión, sesión persistente, reingreso con biometría, funcionamiento sin conexión con datos cacheados.
 
 ### Comercio
 
 - Edición de datos generales y horarios del local.
 - Gestión de fotos y video de presentación (cámara, galería, copia local y publicación vía API).
-- Alta, edición y baja de promociones.
+- Alta, edición y baja de promociones, con la cantidad de usos de cada una.
 - Escaneo del QR del cliente para registrar el uso de una promoción.
+- Respuesta a las reseñas de los clientes (una respuesta por reseña).
 
 ---
 
