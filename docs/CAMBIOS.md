@@ -225,6 +225,24 @@ Cada notificación viaja con `data: { promocionId }` (`src/servicios/avisos.ts`)
 
 ---
 
+## 10. QR de promociones migrado al contrato real de la API
+
+Verificado en vivo de punta a punta (código por usuario, validación, contador). El flujo anterior era un fósil de la era mock: el vecino generaba una cadena local `PROMO|pro|usr` y el comercio validaba al cliente contra `usuariosMock` — todo QR de un usuario real era rechazado, y el "registrar uso" solo escribía en SQLite local, así que el contador de usos del PRD nunca subía en la API.
+
+| Pieza | Antes | Ahora |
+|---|---|---|
+| Código del vecino | cadena inventada localmente | `POST /promociones/:id/usos` — la API genera un código único por vecino y promo; la ficha lo recupera de `GET /yo/usos` al abrir |
+| Validación del comercio | lookup en mock + write local | `POST /mi-comercio/usos/validar { codigo }` — una pasada al escanear; la API registra el uso y recalcula `usos` |
+| Errores | genéricos | los del sobre de la API (`PROMO_YA_USADA`, etc.), mostrados tal cual |
+
+Archivos: `src/servicios/usos-promociones.ts` (3 funciones de API; la tabla local queda como registro del dispositivo y fallback sin conexión), `app/promocion/[id].tsx`, `app/escanear-qr.tsx`, `src/servicios/notificaciones.ts`.
+
+## 11. Auditoría anti-fósiles de mock
+
+Búsqueda sistemática de la clase de bug anterior (código de mock nunca migrado): imports de mocks, estado local que debería ser servidor, ids inventados. Resultado: favoritos, reseñas (CRUD + respuesta + reportes + cola offline idempotente), avisos, media y mi-comercio ya migraban limpio. Corregido lo único encontrado: los **autores de reseñas** se resolvían contra `usuariosMock` — todo usuario real mostraba "Vecino/a". Ahora las reseñas propias muestran el nombre de la sesión (`/yo`); las de otros, "Vecino/a" — la API no expone nombres de autores ni endpoint de usuarios (hueco documentado en `HUECOS-PRD.md` §F). Código muerto eliminado (`registrarUsoPromocion`).
+
+---
+
 ## Cómo correr el proyecto
 
 **API de la cátedra** (la app no muestra datos sin ella):
