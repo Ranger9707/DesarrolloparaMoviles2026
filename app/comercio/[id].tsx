@@ -23,10 +23,7 @@ import { FormularioResena } from "../../src/components/resenas/formulario-resena
 import { FormularioRespuesta } from "../../src/components/resenas/formulario-respuesta";
 import { TarjetaResena } from "../../src/components/resenas/tarjeta-resena";
 import { useTema } from "../../src/contexto/tema";
-import {
-  obtenerUsuarioActual,
-  obtenerUsuarioPorId,
-} from "../../src/servicios/autenticacion";
+import { obtenerUsuarioActual } from "../../src/servicios/autenticacion";
 import { prepararMultimediaComercio } from "../../src/servicios/archivos";
 import { ErrorApi } from "../../src/servicios/api";
 import { obtenerComercioPorId } from "../../src/servicios/comercios";
@@ -196,16 +193,18 @@ export default function ComercioDetalleScreen() {
 
       const { resenas: datos, desdeCache } = await obtenerResenasConEstado(comercioId);
 
-      const conAutor = await Promise.all(
-        datos.map(async (resena) => {
-          const usuario = await obtenerUsuarioPorId(resena.usuarioId);
+      // El DTO de reseñas de la API no incluye el nombre del autor y no hay
+      // endpoint para resolver usuarios: el único nombre que conocemos con
+      // certeza es el de la sesión activa (sus reseñas propias).
+      const sesion = await obtenerUsuarioActual();
 
-          return {
-            resena,
-            autor: usuario?.nombre ?? "Vecino/a",
-          };
-        }),
-      );
+      const conAutor = datos.map((resena) => ({
+        resena,
+        autor:
+          sesion && resena.usuarioId === sesion.id
+            ? sesion.nombre
+            : "Vecino/a",
+      }));
 
       setResenas(conAutor);
       setResenasDesdeCache(desdeCache);

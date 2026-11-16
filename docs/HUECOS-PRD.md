@@ -76,3 +76,11 @@ El cliente pidió explícitamente en su documento: *"Este documento tiene huecos
 - **Qué dice:** *"Tres cosas que la documentación vieja de internet dice mal" → "Los íconos son `@react-native-vector-icons/ionicons`, no `@expo/vector-icons`."*
 - **Qué había:** la app importaba `Ionicons` desde `@expo/vector-icons` en 13 archivos (y tenía el plugin nuevo declarado en `app.json` sin usar los imports).
 - **Qué hicimos:** migración completa de los 13 imports a `@react-native-vector-icons/ionicons` (export default, misma API de glifos), con los tipados adaptados al `name` estricto del paquete (`Parameters<typeof Ionicons>[0]["name"]`). Verificado en emulador: todos los íconos renderizan. La excepción consciente es `components/ui/icon-symbol.tsx` (código de plantilla que usa la familia **MaterialIcons**, no ionicons — la nota del PRD refiere a la familia de íconos de la app).
+
+---
+
+## F. Hueco del contrato de la API: nombres de autores de reseñas
+
+- **Qué dice:** el mockup de la ficha muestra los autores con nombre ("Marta G. 5 estrellas").
+- **Por qué es hueco:** el DTO de reseñas de la API (`GET /comercios/:id/resenas`) incluye `usuarioId` pero **no el nombre del autor**, y la API no ofrece endpoint para resolver usuarios (`/usuarios/:id` no existe; el único recurso de usuario es `/yo`, la sesión propia). Es la misma clase de hueco que "foto para una reseña": el pedido es visible en el mockup pero el contrato no lo soporta.
+- **Qué hicimos:** las reseñas propias muestran el nombre real de la sesión (vía `/yo`); las de otros usuarios muestran "Vecino/a". Reportado acá en vez de inventar datos.
